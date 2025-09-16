@@ -30,3 +30,25 @@ export const login = async (email: string, password: string): Promise<User> => {
     }
     return user;
 };
+
+export const getProfile = async (userId: string): Promise<Omit<User, 'password'>> => {
+    const user = await db.user.findUnique({
+        where: { id: userId }, select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            bio: true,
+            password: false,
+            skills: true,
+            avatarUrl: true,
+            createdAt: true,
+            updatedAt: true
+        }
+    });
+
+    if (!user) {
+        throw new APIError(httpStatus.NOT_FOUND, 'User not found');
+    }
+    return user;
+}

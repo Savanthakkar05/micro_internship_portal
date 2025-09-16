@@ -5,6 +5,7 @@ import { generateTokens } from '../token/generateToken';
 import { env } from '../config/config';
 import jwt from 'jsonwebtoken';
 import { saveRefreshToken, findRefreshToken, removeRefreshToken } from '../token/token.service'; // <-- new file for db ops
+import { APIError } from '../utils/errorHandling';
 
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -62,3 +63,19 @@ export const refreshAccessToken = async (req: Request, res: Response, next: Next
         next(error);
     }
 };
+
+export const profile = async(req : Request,res : Response, next : NextFunction) =>
+{
+    try {
+        const userId = req.user?.id;
+        if(!userId) 
+        {
+            throw new APIError(httpStatus.UNAUTHORIZED,'User not authenticated');
+        }
+
+        const user = await authServices.getProfile(userId);
+        res.status(httpStatus.OK).send(user);
+    } catch (error : any) {
+        next(error);
+    }
+}

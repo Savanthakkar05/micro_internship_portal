@@ -1,6 +1,7 @@
 import exress, { Router } from 'express';
 import { authValidation, authController } from '../auth';
 import { validate } from '../validate/validate';
+import { authenticate } from '../auth/auth.middleware';
 const router: Router = exress.Router();
 
 router
@@ -14,5 +15,9 @@ router
 router
     .route('/refreshtoken')
     .post(validate(authValidation.refreshTokenBody), authController.refreshAccessToken);
+
+router
+    .route('/')
+    .get(authenticate(), authController.profile);
 
 export default router;
