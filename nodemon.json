@@ -1,0 +1,6 @@
+{
+  "match": ["src"],
+  "ext": ".js,.ts",
+  "ignore": ["dist"],
+  "exec": "tsx ./src/server.ts"
+}

@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  bio       String?
+  skills    String[]
+  avatarUrl String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  gigs             Gig[]         @relation("MentorGigs") // gigs posted (if mentor)
+  applications     Application[]
+  sentMessages     Message[]     @relation("SentMessages")
+  receivedMessages Message[]     @relation("ReceivedMessages")
+  reviewsGiven     Review[]      @relation("GivenReviews")
+  reviewsReceived  Review[]      @relation("ReceivedReviews")
+  tokens           Token[]       @relation("UserToken")
+}
+
+model Token {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  device    String? // optional, e.g., "Chrome", "iOS"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime
+  user      User     @relation("UserToken", fields: [userId], references: [id])
+  userId    String
+}
+
+model Gig {
+  id             String   @id @default(uuid())
+  title          String
+  description    String
+  requiredSkills String[]
+  durationDays   Int
+  stipend        Float? // nullable if unpaid
+  status         String   @default("OPEN") // OPEN | IN_PROGRESS | COMPLETED
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  mentor   User   @relation("MentorGigs", fields: [mentorId], references: [id])
+  mentorId String
+
+  applications Application[]
+  reviews      Review[]      @relation("GigReviews") // 👈 Added
+}
+
+model Application {
+  id        String   @id @default(uuid())
+  status    String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | COMPLETED
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  student   User   @relation(fields: [studentId], references: [id])
+  studentId String
+  gig       Gig    @relation(fields: [gigId], references: [id])
+  gigId     String
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId   String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId String
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int // 1–5
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  reviewer   User   @relation("GivenReviews", fields: [reviewerId], references: [id])
+  reviewerId String
+
+  reviewee   User   @relation("ReceivedReviews", fields: [revieweeId], references: [id])
+  revieweeId String
+
+  gig   Gig    @relation("GigReviews", fields: [gigId], references: [id]) // 👈 Named relation
+  gigId String
+}
